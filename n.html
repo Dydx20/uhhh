@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+            list-style-type: none;
+            border: none;
+            outline: none;
+            font-style: inherit; 
+        }
+        body{
+            background-color: black;
+        }
+
+        nav{
+            background-color:rgb(50, 148, 240) ;
+            width: 100%;
+            height: 100px;
+        }
+        .logo{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+        }
+
+        .logo a{
+            font-size:55px ;
+            color: white;
+            padding: 5px 0;
+        }
+
+        .header{
+            padding: 40px;
+            color: #fff;
+            margin: 0 auto;
+            margin-bottom: 17px;
+        }
+        .header h1{
+            text-align: center;
+            margin-top: -15px;
+        }
+
+        .wheel{
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        .center-circle{
+            width: 100px;
+            height: 100px;
+            border-radius: 60px;
+            background-color: #fff;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .triangle{
+            width: 0; 
+            height: 0; 
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent; 
+            border-right: 30px solid white; 
+            position: absolute;
+            top: 50%;
+            right: -220%;
+            transform: translateY(-50%);
+        }
+        textarea{
+            background-color: rgba(20, 20, 20, 0.2);
+            caret-color: #fff;
+            resize: none;
+            color: #fff;
+            border: 1px solid white;
+            padding: 10px;
+            font-size: 25px;
+        }
+        .inputArea{
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        /* Modal overlay */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000; /* Ensure it appears on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Black background with opacity */
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s; /* Add fade-in animation */
+        }
+
+        /* Modal content box */
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            width: 550px;
+            max-width: 80%;
+            animation: popIn 0.3s ease; /* Popup animation */
+        }
+
+        .modal-content h3 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.7em;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #55488a;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        /* Popup animation */
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body >
+    <nav>
+        <div class="logo">
+            <a href="n.html">spinthewheel.com</a>
+        </div>
+    </nav>
+    <div class="header">
+        <h1>SPIN THE WHEEL!</h1>
+    </div>
+    <div class="wheel">
+        <canvas class="" id="canvas" width="500" height="500"></canvas>
+        <div class="center-circle" onclick="spin()">
+            <div class="triangle"></div>
+        </div>
+        
+    </div>
+    <div id="winnerModal" class="modal">
+        <div class="modal-content">
+            <h3>🎉Congratulations!🎉</h3>
+            <p id="modalWinner"></p>
+            <button onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <div class="inputArea" onchange="createWheel()">
+        <textarea rows="15" cols="20" >cat
+dog
+cow
+duck
+sheep
+goat
+bird
+neko
+chicken</textarea>
+    </div>
+
+    <script>
+        function randomColor(){
+            r = Math.floor(Math.random() * 255);
+            g = Math.floor(Math.random() * 255);
+            b = Math.floor(Math.random() * 255);
+            return {r,g,b}
+        }
+        function toRad(deg){
+            return deg * (Math.PI / 180.0);
+        }
+        function randomRange(min,max){
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function easeOutSine(x) {
+            return Math.sin((x * Math.PI) / 2);
+        }
+        // get percent between 2 number
+        function getPercent(input,min,max){
+            return (((input - min) * 100) / (max - min))/100
+        }
+    </script>
+
+    <script>
+        const canvas = document.getElementById("canvas")
+        const ctx = canvas.getContext("2d")
+        const width = document.getElementById("canvas").width
+        const height = document.getElementById("canvas").height
+
+        const centerX = width/2
+        const centerY = height/2
+        const radius = width/2
+
+        let items = document.getElementsByTagName("textarea")[0].value.split("\n");
+
+        let currentDeg = 0
+        let step = 360/items.length
+        let colors = []
+        let itemDegs = {}
+
+        for(let i = 0 ; i < items.length + 1;i++){
+            colors.push(randomColor())
+        }
+
+        function createWheel(){
+            items = document.getElementsByTagName("textarea")[0].value.split("\n");
+            step = 360/items.length
+            colors = []
+            for(let i = 0 ; i < items.length + 1;i++){
+                colors.push(randomColor())
+            }
+            draw()
+        }
+        draw()
+
+        function draw(){
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, toRad(0), toRad(360))
+            ctx.fillStyle = `rgb(${33},${33},${33})`
+            ctx.lineTo(centerX, centerY);
+            ctx.fill()
+
+            let startDeg = currentDeg;
+            for(let i = 0 ; i < items.length; i++, startDeg += step){
+                let endDeg = startDeg + step
+
+                color = colors[i]
+                let colorStyle = `rgb(${color.r},${color.g},${color.b})`
+
+                ctx.beginPath();
+                rad = toRad(360/step);
+                ctx.arc(centerX, centerY, radius - 2, toRad(startDeg), toRad(endDeg))
+                let colorStyle2 = `rgb(${color.r - 30},${color.g - 30},${color.b - 30})`
+                ctx.fillStyle = colorStyle2
+                ctx.lineTo(centerX, centerY);
+                ctx.fill()
+
+                ctx.beginPath();
+                rad = toRad(360/step);
+                ctx.arc(centerX, centerY, radius - 30, toRad(startDeg), toRad(endDeg))
+                ctx.fillStyle = colorStyle
+                ctx.lineTo(centerX, centerY);
+                ctx.fill()
+
+                // draw text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(toRad((startDeg + endDeg)/2));
+                ctx.textAlign = "center";
+                if(color.r > 150 || color.g > 150 || color.b > 150){
+                    ctx.fillStyle = "#000";
+                }
+                else{
+                    ctx.fillStyle = "#fff";
+                }
+                ctx.font = 'bold 24px serif';
+                ctx.fillText(items[i], 130, 10);
+                ctx.restore();
+
+                itemDegs[items[i]] = 
+                    {
+                    "startDeg": startDeg,
+                    "endDeg" : endDeg
+                    }
+                
+
+                
+            }
+        }
+        
+
+        let speed = 0
+        let maxRotation = randomRange(360* 3, 360 * 6)
+        let pause = false
+        function animate(){
+            if(pause){
+                return
+            }
+            speed = easeOutSine(getPercent(currentDeg ,maxRotation ,0)) * 20
+            if(speed < 0.01){
+                speed = 0;
+                pause = true;
+
+                showwinner();
+            }
+            currentDeg += speed
+            draw()
+            window.requestAnimationFrame(animate);
+        }
+        
+        function showwinner(){
+            const secondChoice = items[1];
+            document.getElementById("modalWinner").innerHTML= `The winner is ${secondChoice}`;  
+            
+            document.getElementById("winnerModal").style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('winnerModal').style.display = 'none';
+        }
+
+        function spin(){
+            if(speed != 0){
+                return;
+            }
+
+            maxRotation = 0;
+            currentDeg = 0
+            createWheel()
+            draw();
+
+            // Get the end degree for the second choice in the items list
+            const secondChoice = items[1]; // Second choice in the textarea
+            const endDegForSecondChoice = itemDegs[secondChoice].endDeg;
+
+            // Calculate the required maxRotation to land on the second choice
+            maxRotation = (360 * 6) - endDegForSecondChoice + 10; // 6 full rotations + exact positioning
+
+            console.log("maxRotation:", maxRotation);
+            console.log("Second choice:", secondChoice, "End Deg:", endDegForSecondChoice);
+            pause = false
+            window.requestAnimationFrame(animate);
+        }
+
+    </script>
+</body>
+
+</html>
